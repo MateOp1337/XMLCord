@@ -57,7 +57,6 @@ def get_token():
 
 class Bot(commands.Bot):
     def __init__(self):
-        # Użycie tagów w inicjalizacji bota
         super().__init__(
             command_prefix=config.get('prefix', '!'),
             intents=discord.Intents.all(),
