@@ -5,7 +5,7 @@ from parser import parse
 from importer import install_package, get_package_size
 from typing import Callable
 
-xml_data = parse('bot')
+xml_data = parse('XMLCord/bot')
 xml_bot = xml_data['bot']
 config = xml_bot['config']
 
@@ -142,22 +142,19 @@ def create_event_function(data: dict, event: str):
 
     return func
 
+for name, value in commands_list.items():
+    print(f'Command found: {name}')
+    print(f'Command {name}: {value}')
+    
+    func = create_command_function(value)
+    create_dynamic_command(name, func)
 
-for command in commands_list:
-    for name, value in commands_list.items():
-        print(f'Command found: {name}')
-        print(f'Command {name}: {value}')
-        
-        func = create_command_function(value)
-        create_dynamic_command(name, func)
-
-for event in events:
-    for name, value in events.items():
-        print(f'Event found: {name}')
-        print(f'Event {name}: {value}')
-        
-        func = create_event_function(value, name)
-        bot.add_listener(func, name)
+for name, value in events.items():
+    print(f'Event found: {name}')
+    print(f'Event {name}: {value}')
+    
+    func = create_event_function(value, name)
+    bot.add_listener(func, name)
 
 TOKEN = get_token()
 bot.run(TOKEN)
