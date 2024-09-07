@@ -1,0 +1,40 @@
+<bot>
+    <config>
+        <name>Your bot name</name>
+        <prefix>-</prefix>
+
+        <!--
+            You can remove these lines and use another external file, like .env, .yml,
+            .json etc., but it must be provided in the "token" tag. 
+            
+            Example: 
+            <tag token=".env"/>
+        -->
+        <token></token>
+
+        <!-- Optional Tags -->
+        <tag case_insensitive="true"/>
+        <tag strip_after_prefix="true"/>
+        <tag token=".env"/>
+    </config>
+    <variables>
+        <my_variable>123</my_variable>
+    </variables>
+    <commands>
+        <help>
+            <embed>
+                <title>Help embed</title>
+                <description>Some text :P</description>
+                <color>#ff0000</color>
+            </embed>
+            <reply_message>
+                <content>I like cheese!</content>
+            </reply_message>
+        </help>
+    </commands>
+    <events>
+        <on_ready>
+            <log>Bot is ready!</log>
+        </on_ready>
+    </events>
+</bot>
