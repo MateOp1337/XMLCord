@@ -1,5 +1,5 @@
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 import os
 from typing import Callable, Dict, Any
 from parser import parse
@@ -16,11 +16,12 @@ def clean_data(data: Dict[str, Any]) -> Dict[str, Any]:
 
 xml_data = parse('XMLCord/bot')
 print(f"Parsed XML Data: {xml_data}")
- 
+
 xml_bot = xml_data['bot']
 config = clean_data(xml_bot['config'])
 commands_list = clean_data(xml_bot['commands'])
 events = clean_data(xml_bot['events'])
+xml_tasks = clean_data(xml_bot['tasks'])
 variables = clean_data(xml_bot['variables'])
 
 tags = {k: (v.lower() == 'true') if isinstance(v, str) and v.lower() in {'true', 'false'} else v for item in config.pop('tag', []) if isinstance(item, dict) for k, v in item.get('@attributes', {}).items()}
@@ -114,13 +115,13 @@ def convert_argument(value: str, arg_type: str):
             raise ValueError(f"Invalid JSON format: '{value}'")
     return value
 
-def format_data(data: Any, formatted_arguments: Dict[str, Any]) -> Any:
+def format_data(data: Any, vars: Dict[str, Any]) -> Any:
     if isinstance(data, dict):
-        return {k: format_data(v, formatted_arguments) for k, v in data.items()}
+        return {k: format_data(v, vars) for k, v in data.items()}
     elif isinstance(data, list):
-        return [format_data(item, formatted_arguments) for item in data]
+        return [format_data(item, vars) for item in data]
     elif isinstance(data, str):
-        return data.format(**formatted_arguments)
+        return data.format(**vars)
     return data
 
 def create_command_function(data: dict) -> Callable:
@@ -150,15 +151,32 @@ def create_command_function(data: dict) -> Callable:
             else:
                 raise ValueError("Invalid argument definition")
 
-        formatted_arguments = {'ctx': ctx}
-        formatted_arguments.update({f'argument({k})': v for k, v in arguments.items()})
-        formatted_arguments.update({f'var({k})': v for k, v in variables.items()})
+        if 'permissions' in data:
+            permissions_data = data['permissions']
+            permissions = []
+
+            if isinstance(permissions_data, dict):
+                for perm_name, perm_value in permissions_data.items():
+                    if perm_name == '@attributes':
+                        for perm, value in perm_value.items():
+                            if value.lower() == 'true':
+                                permissions.append(perm)
+                    else:
+                        permissions.append(perm_name)
+
+            def check_permissions(perms, user):
+                missing_permissions = [perm for perm in perms if not getattr(user.guild_permissions, perm, False)]
+                if missing_permissions:
+                    raise commands.MissingPermissions(missing_permissions)
+
+            check_permissions(permissions, ctx.author)
+
+        vars = {'ctx': ctx}
+        vars.update({f'argument({k})': v for k, v in arguments.items()})
+        vars.update({f'var({k})': v for k, v in variables.items()})
 
         for action_name, action_data in data.items():
-            if isinstance(action_data, dict):
-                action_data = format_data(action_data, formatted_arguments)
-            else:
-                action_data = format_data(action_data, formatted_arguments)
+            action_data = format_data(action_data, vars)
 
             if action_name == 'embed':
                 if 'color' in action_data:
@@ -199,18 +217,18 @@ def create_event_function(data: dict, event: str) -> Callable:
                 else:
                     raise ValueError("Invalid argument definition")
 
-        formatted_arguments = {f'argument({k})': v for k, v in arguments.items()}
-        formatted_arguments.update({f'var({k})': v for k, v in variables.items()})
+        vars = {f'argument({k})': v for k, v in arguments.items()}
+        vars.update({f'var({k})': v for k, v in variables.items()})
 
         for action_name, action_data in data.items():
-            action_data = format_data(action_data, formatted_arguments)
+            action_data = format_data(action_data, vars)
 
             if action_name == 'log':
                 print(action_data)
             elif action_name == 'run_script':
                 exec(action_data)  
             elif action_name == 'channel_message':
-                channel_id = int(action_data.get('@attributes', {}).get('id', '0').format(**formatted_arguments))
+                channel_id = int(action_data.get('@attributes', {}).get('id', '0').format(**vars))
                 channel = await bot.fetch_channel(channel_id)
                 if channel:
                     del action_data['@attributes']
@@ -233,6 +251,55 @@ def create_event_function(data: dict, event: str) -> Callable:
 
     return func
 
+def create_dynamic_loop_function(data: dict) -> Callable:
+    async def func():
+        vars = ({f'var({k})': v for k, v in variables.items()})
+
+        for action_name, action_data in data.items():
+            action_data = format_data(action_data, vars)
+
+            if action_name == 'log':
+                print(action_data)
+            elif action_name == 'run_script':
+                exec(action_data)  
+            elif action_name == 'channel_message':
+                channel_id = int(action_data.get('@attributes', {}).get('id', '0').format(**vars))
+                channel = await bot.fetch_channel(channel_id)
+                if channel:
+                    del action_data['@attributes']
+                    await channel.send(**action_data)
+
+    return func
+
+def create_dynamic_loop(*, name: str, loop_func: Callable[..., Any], hours: float = 0, minutes: float = 0, seconds: float = 0, enabled: bool = False):
+    hours = float(hours) if isinstance(hours, str) else hours
+    minutes = float(minutes) if isinstance(minutes, str) else minutes
+    seconds = float(seconds) if isinstance(seconds, str) else seconds
+
+    @tasks.loop(hours=hours, minutes=minutes, seconds=seconds, name=name)
+    async def dynamic_loop():
+        await loop_func()
+    
+    return dynamic_loop
+
+enabled_loops = []
+
+for task_name, task in xml_tasks.items():
+    attr = task['@attributes']
+    func = create_dynamic_loop_function(task)
+    
+    dynamic_loop = create_dynamic_loop(
+        name=task_name,
+        loop_func=func,
+        hours=attr.get('hours', 0),
+        minutes=attr.get('minutes', 0),
+        seconds=attr.get('seconds', 0),
+        enabled=attr.get('enabled', False)
+    )
+    
+    if attr.get('enabled', False):
+        enabled_loops.append(dynamic_loop)
+
 for name, value in commands_list.items():
     print(f'Command found: {name}')
     print(f'Command {name}: {value}')
@@ -246,6 +313,11 @@ for name, value in events.items():
     
     func = create_event_function(value, name)
     bot.add_listener(func, name)
+
+@bot.event
+async def on_ready():
+    for loop in enabled_loops:
+        await loop.start()
 
 TOKEN = get_token()
 bot.run(TOKEN)
