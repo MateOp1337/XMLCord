@@ -55,8 +55,6 @@ This example shows how to set up basic configurations, including the bot’s pre
 ### [Changelogs](changelog.md)
 
 ### Upcoming features:
-- Permissions
-- Tasks
 - Buttons, views, modals, select menus
 - Slash commands
 - More actions:
