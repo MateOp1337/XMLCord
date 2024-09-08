@@ -37,9 +37,28 @@
         <tag ignore_self="true"/>
         <tag token=".env"/>
     </config>
-    <commands></commands>
+    <commands>
+        <greet>
+            <reply_message>
+                <content>
+                    Hi, {ctx.author.mention}!
+                </content>
+            </reply_message>
+        </greet>
+    </commands>
     <events></events>
 </bot>
 ```
 
 This example shows how to set up basic configurations, including the bot’s prefix, token source, and additional settings like case sensitivity and token file path.
+
+### Upcoming features:
+- Permissions
+- Tasks
+- Buttons, views, modals, select menus
+- More actions:
+    - Manage channels
+    - Manage users
+    - Manage roles
+    - Simple management of dictionaries, lists and some objects
+    - Connection to external APIs
