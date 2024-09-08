@@ -14,7 +14,7 @@ def clean_data(data: Dict[str, Any]) -> Dict[str, Any]:
         return [clean_data(item) for item in data]
     return data
 
-xml_data = parse('XMLCord/bot')
+xml_data = parse('bot')
 print(f"Parsed XML Data: {xml_data}")
 
 xml_bot = xml_data['bot']
