@@ -52,6 +52,8 @@
 
 This example shows how to set up basic configurations, including the bot’s prefix, token source, and additional settings like case sensitivity and token file path.
 
+### [Changelogs](changelog.md)
+
 ### Upcoming features:
 - Permissions
 - Tasks
