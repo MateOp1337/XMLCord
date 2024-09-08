@@ -6,4 +6,5 @@
 
 ### a1.0.2
 - Added support for tasks.
+- Added permissions.
 - Minor bug fixes.
