@@ -58,6 +58,7 @@ This example shows how to set up basic configurations, including the bot’s pre
 - Permissions
 - Tasks
 - Buttons, views, modals, select menus
+- Slash commands
 - More actions:
     - Manage channels
     - Manage users
