@@ -14,7 +14,7 @@ def clean_data(data: Dict[str, Any]) -> Dict[str, Any]:
         return [clean_data(item) for item in data]
     return data
 
-xml_data = parse('bot')
+xml_data = parse('XMLCord/bot')
 print(f"Parsed XML Data: {xml_data}")
 
 xml_bot = xml_data['bot']
@@ -150,9 +150,9 @@ def create_command_function(data: dict) -> Callable:
             else:
                 raise ValueError("Invalid argument definition")
 
-        formatted_arguments = {f'argument({k})': v for k, v in arguments.items()}
-        formatted_variables = {f'var({k})': v for k, v in variables.items()}
-        formatted_arguments.update(formatted_variables)
+        formatted_arguments = {'ctx': ctx}
+        formatted_arguments.update({f'argument({k})': v for k, v in arguments.items()})
+        formatted_arguments.update({f'var({k})': v for k, v in variables.items()})
 
         for action_name, action_data in data.items():
             if isinstance(action_data, dict):
