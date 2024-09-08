@@ -2,23 +2,15 @@
     <config>
         <name>Your bot name</name>
         <prefix>-</prefix>
-
-        <!--
-            You can remove these lines and use another external file, like .env, .yml,
-            .json etc., but it must be provided in the "token" tag. 
-            
-            Example: 
-            <tag token=".env"/>
-        -->
         <token></token>
-
-        <!-- Optional Tags -->
         <tag case_insensitive="true"/>
         <tag strip_after_prefix="true"/>
+        <tag ignore_self="true"/>
         <tag token=".env"/>
     </config>
     <variables>
         <my_variable>123</my_variable>
+        <error_channel>1234</error_channel>
     </variables>
     <commands>
         <help>
@@ -31,10 +23,34 @@
                 <content>I like cheese!</content>
             </reply_message>
         </help>
+        <test>
+            <reply_message>
+                <content>XD</content>
+            </reply_message>
+        </test>
+        <echo>
+            <argument name='message' type='text' rest='true'/>
+            <reply_message>
+                <content>{argument(message)}</content>
+            </reply_message>
+        </echo>
     </commands>
     <events>
         <on_ready>
             <log>Bot is ready!</log>
         </on_ready>
+        <on_message>
+            <argument name='message' rest='true'/>
+            <message>
+                <content>You said: {argument(message).content}</content>
+            </message>
+        </on_message>
+        <on_command_error>
+            <argument name='ctx'/>
+            <argument name='error'/>
+            <channel_message id='{var(error_channel)}'>
+                <content>{argument(error)}</content>
+            </channel_message>
+        </on_command_error>
     </events>
 </bot>

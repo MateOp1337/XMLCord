@@ -1,25 +1,41 @@
 import discord
-import os
 from discord.ext import commands
+import os
+from typing import Callable, Dict, Any
 from parser import parse
 from importer import install_package, get_package_size
-from typing import Callable
 
-xml_data = parse('XMLCord/bot')
+def clean_data(data: Dict[str, Any]) -> Dict[str, Any]:
+    if isinstance(data, dict):
+        if '#text' in data:
+            return data['#text']
+        return {k: clean_data(v) for k, v in data.items()}
+    elif isinstance(data, list):
+        return [clean_data(item) for item in data]
+    return data
+
+xml_data = parse('bot')
+print(f"Parsed XML Data: {xml_data}")
+
 xml_bot = xml_data['bot']
-config = xml_bot['config']
-
-commands_list = xml_bot['commands']
-events = xml_bot['events']
+config = clean_data(xml_bot['config'])
+commands_list = clean_data(xml_bot['commands'])
+events = clean_data(xml_bot['events'])
+variables = clean_data(xml_bot['variables'])
 
 tags = {k: (v.lower() == 'true') if isinstance(v, str) and v.lower() in {'true', 'false'} else v for item in config.pop('tag', []) if isinstance(item, dict) for k, v in item.get('@attributes', {}).items()}
 config['tags'] = tags
 
-def get_token():
-    if config.get('token') is not None:
-        return config.get('token')
-    elif 'token' in tags:
+ignore_self = tags.get('ignore_self', False)
+
+def get_token() -> str:
+    token_from_config = config.get('token')
+    if token_from_config:
+        return token_from_config
+
+    if 'token' in tags:
         token_tag = tags['token']
+
         if '.env' in token_tag:
             try:
                 from dotenv import load_dotenv
@@ -34,7 +50,8 @@ def get_token():
             else:
                 load_dotenv()
                 return os.getenv('TOKEN')
-        if '.yml' in token_tag:
+
+        elif '.yml' in token_tag:
             try:
                 import yaml
             except ImportError:
@@ -49,20 +66,24 @@ def get_token():
                 with open(token_tag, 'r') as file:
                     data = yaml.safe_load(file)
                     return data['token']
-        if '.json' in token_tag:
+
+        elif '.json' in token_tag:
             import json
             with open(token_tag, 'r') as file:
                 data = json.load(file)
                 return data['token']
+
+    raise ValueError("No valid token found")
+
 
 class Bot(commands.Bot):
     def __init__(self):
         super().__init__(
             command_prefix=config.get('prefix', '!'),
             intents=discord.Intents.all(),
-            case_insensitive=tags.get('case_insensitive', True),
+            case_insensitive=tags.get('case_insensitive', False),
             help_command=None,
-            strip_after_prefix=tags.get('strip_after_prefix', True)
+            strip_after_prefix=tags.get('strip_after_prefix', False)
         )
 
 bot = Bot()
@@ -75,70 +96,140 @@ def hex_to_int(hex_str: str) -> int:
     hex_str = hex_str.lstrip('#')
     return int(hex_str, 16)
 
-def create_command_function(data: dict):
-    async def func(ctx: commands.Context):
-        print(data)
-        
+def convert_argument(value: str, arg_type: str):
+    if arg_type in ['str', 'text', 'string']:
+        return value
+    elif arg_type in ['int', 'number', 'integer']:
+        try:
+            return int(value)
+        except ValueError:
+            raise ValueError(f"Expected an integer, got '{value}'")
+    elif arg_type in ['list', 'array']:
+        return value.split()
+    elif arg_type in ['dict', 'json']:
+        try:
+            import json
+            return json.loads(value)
+        except json.JSONDecodeError:
+            raise ValueError(f"Invalid JSON format: '{value}'")
+    return value
+
+def format_data(data: Any, formatted_arguments: Dict[str, Any]) -> Any:
+    if isinstance(data, dict):
+        return {k: format_data(v, formatted_arguments) for k, v in data.items()}
+    elif isinstance(data, list):
+        return [format_data(item, formatted_arguments) for item in data]
+    elif isinstance(data, str):
+        return data.format(**formatted_arguments)
+    return data
+
+def create_command_function(data: dict) -> Callable:
+    async def func(ctx: commands.Context, *args):
+        arguments = {}
+        arg_list = data.get('argument', [])
+        remaining_args = list(args)
+
+        if isinstance(arg_list, dict):
+            arg_list = [arg_list]
+
+        for arg_def in arg_list:
+            if isinstance(arg_def, dict) and '@attributes' in arg_def:
+                attr = arg_def['@attributes']
+                arg_name = attr['name']
+                arg_type = attr.get('type', 'str')
+                rest = attr.get('rest', 'false') == 'true'
+
+                if rest:
+                    arguments[arg_name] = ' '.join(remaining_args)
+                    break
+                else:
+                    if not remaining_args:
+                        raise ValueError(f"Missing argument: {arg_name}")
+                    arg_value = remaining_args.pop(0)
+                    arguments[arg_name] = convert_argument(arg_value, arg_type)
+            else:
+                raise ValueError("Invalid argument definition")
+
+        formatted_arguments = {f'argument({k})': v for k, v in arguments.items()}
+        formatted_variables = {f'var({k})': v for k, v in variables.items()}
+        formatted_arguments.update(formatted_variables)
+
         for action_name, action_data in data.items():
-            print(data.items())
+            if isinstance(action_data, dict):
+                action_data = format_data(action_data, formatted_arguments)
+            else:
+                action_data = format_data(action_data, formatted_arguments)
+
             if action_name == 'embed':
                 if 'color' in action_data:
                     action_data['color'] = hex_to_int(action_data['color'])
                 embed = discord.Embed(**action_data)
                 await ctx.send(embed=embed)
-            
-            elif action_name == 'run_script':
-                eval(action_data)
-            
-            elif action_name == 'reply_embed':
-                if 'color' in action_data:
-                    action_data['color'] = hex_to_int(action_data['color'])
-                embed = discord.Embed(**action_data)
-                await ctx.reply(embed=embed)
-            
+
             elif action_name == 'message':
                 await ctx.send(**action_data)
-            
+
             elif action_name == 'reply_message':
                 await ctx.reply(**action_data)
-     
+
     return func
 
-
-def create_event_function(data: dict, event: str):
+def create_event_function(data: dict, event: str) -> Callable:
     async def func(*args, **kwargs):
+        if args and hasattr(args[0], 'author') and ignore_self and args[0].author.id == bot.user.id:
+            return
+
+        arguments = {}
+        if 'argument' in data:
+            arg_list = data.get('argument', [])
+            if isinstance(arg_list, dict):
+                arg_list = [arg_list]
+
+            for i, arg_def in enumerate(arg_list):
+                if isinstance(arg_def, dict) and '@attributes' in arg_def:
+                    attr = arg_def['@attributes']
+                    arg_name = attr['name']
+                    arg_type = attr.get('type', 'str')
+
+                    if i < len(args):
+                        arg_value = args[i]
+                        arguments[arg_name] = convert_argument(arg_value, arg_type)
+                    else:
+                        raise ValueError(f"Missing argument: {arg_name}")
+                else:
+                    raise ValueError("Invalid argument definition")
+
+        formatted_arguments = {f'argument({k})': v for k, v in arguments.items()}
+        formatted_arguments.update({f'var({k})': v for k, v in variables.items()})
+
         for action_name, action_data in data.items():
-            # Log to console
+            action_data = format_data(action_data, formatted_arguments)
+
             if action_name == 'log':
                 print(action_data)
-            
-            # Run Python script
             elif action_name == 'run_script':
-                eval(action_data)
-            
-            # On message actions
-            if event == 'on_message':
-                # Send embed
+                exec(action_data)  
+            elif action_name == 'channel_message':
+                channel_id = int(action_data.get('@attributes', {}).get('id', '0').format(**formatted_arguments))
+                channel = await bot.fetch_channel(channel_id)
+                if channel:
+                    del action_data['@attributes']
+                    await channel.send(**action_data)
+            elif event == 'on_message':
                 if action_name == 'embed':
                     if 'color' in action_data:
                         action_data['color'] = hex_to_int(action_data['color'])
                     embed = discord.Embed(**action_data)
-                    await args[0].send(embed=embed)
-                    
-                # Reply with embed
+                    await args[0].channel.send(embed=embed)
                 elif action_name == 'reply_embed':
                     if 'color' in action_data:
                         action_data['color'] = hex_to_int(action_data['color'])
                     embed = discord.Embed(**action_data)
                     await args[0].reply(embed=embed)
-                
-                # Send message
                 elif action_name == 'message':
-                    await args[0].send(*action_data)
-                
-                # Reply with message
+                    await args[0].channel.send(**action_data)
                 elif action_name == 'reply_message':
-                    await args[0].reply(*action_data)
+                    await args[0].reply(**action_data)
 
     return func
 

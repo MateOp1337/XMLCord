@@ -14,7 +14,7 @@ except ImportError:
         print('Run script again.')
         exit()
 
-def get_package_size(package_name):
+def get_package_size(package_name) -> float:
     url = f"https://pypi.org/pypi/{package_name}/json"
     response = requests.get(url)
     data = response.json()

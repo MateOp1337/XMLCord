@@ -1,38 +1,36 @@
 import xml.etree.ElementTree as ET
 
-def xml_to_dict(element):
-    result = {element.tag: {} if element.attrib or element.text else None}
-    
+def xml_to_dict(element) -> dict:
+    result = {element.tag: {}}
+
     if element.attrib:
         result[element.tag]['@attributes'] = element.attrib
-    
-    if element.text:
+
+    if element.text and element.text.strip():
         text = element.text.strip()
-        if text.lower() == 'true':
-            result[element.tag] = True
-        elif text.lower() == 'false':
-            result[element.tag] = False
-        elif text:
-            result[element.tag] = text
-    
+        result[element.tag]['#text'] = text
+
     children = list(element)
     if children:
-        default_dict = {}
+        child_dict = {}
         for child in children:
-            child_dict = xml_to_dict(child)
-            for key, value in child_dict.items():
-                if key in default_dict:
-                    if isinstance(default_dict[key], list):
-                        default_dict[key].append(value)
+            child_data = xml_to_dict(child)
+            for key, value in child_data.items():
+                if key in child_dict:
+                    if isinstance(child_dict[key], list):
+                        child_dict[key].append(value)
                     else:
-                        default_dict[key] = [default_dict[key], value]
+                        child_dict[key] = [child_dict[key], value]
                 else:
-                    default_dict[key] = value
-        result[element.tag] = default_dict
-    
+                    child_dict[key] = value
+        if result[element.tag]:
+            result[element.tag].update(child_dict)
+        else:
+            result[element.tag] = child_dict
+
     return result
 
-def parse(file):
+def parse(file) -> dict:
     tree = ET.parse(f'{file}.xml')
     root = tree.getroot()
     data = xml_to_dict(root)
