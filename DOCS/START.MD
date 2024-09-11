@@ -1,3 +1,3 @@
 # XMLCord docs
 
-1. [Getting started](get-started)
+1. [Getting started](get-started.md)
