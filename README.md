@@ -1,5 +1,10 @@
 ## XMLCord Bot
 
+> ### Warning!
+> XMLCord is currently in early Alpha stages and under active development. As such, it may contain bugs or exhibit instability.
+> If you encounter redundant print statements, they are likely leftover from internal testing. You are free to remove them as needed.
+
+
 **XMLCord** is a Discord bot framework that utilizes XML configuration for defining bot behaviors, commands, and events. This framework allows for dynamic command creation and event handling based on XML-defined specifications, providing an easy way to manage bot functionalities without hardcoding them directly into the code.
 
 ### Key Features
