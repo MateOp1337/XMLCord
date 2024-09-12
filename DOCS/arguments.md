@@ -27,9 +27,12 @@
 
 ```xml
 <command>
-  <argument name='user' type='str'/>
-  <argument name='age' type='int'/>
-  <argument name='roles' type='list'/>
+   <argument name='user' type='str'/>
+   <argument name='age' type='int'/>
+   <argument name='roles' type='list'/>
+   <message>
+      <content>{argument(message)}</content>
+   </message>
 </command>
 ```
 
