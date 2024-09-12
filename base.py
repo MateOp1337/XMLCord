@@ -1,9 +1,15 @@
+# base.py
+
 import discord
 from discord.ext import commands, tasks
+from discord.ui import View, Button, Select
+from discord import SelectOption, ButtonStyle
 import os
 from typing import Callable, Dict, Any
 from parser import parse
-from importer import install_package, get_package_size
+from XMLCord.exceptions import *
+
+DEBUG_MODE = True
 
 def clean_data(data: Dict[str, Any]) -> Dict[str, Any]:
     if isinstance(data, dict):
@@ -14,15 +20,23 @@ def clean_data(data: Dict[str, Any]) -> Dict[str, Any]:
         return [clean_data(item) for item in data]
     return data
 
-xml_data = parse('bot')
-print(f"Parsed XML Data: {xml_data}")
+xml_data = parse('XMLCord/bot')
+
+if DEBUG_MODE:
+    print(f"Parsed XML Data: {xml_data}")
 
 xml_bot = xml_data['bot']
-config = clean_data(xml_bot['config'])
-commands_list = clean_data(xml_bot['commands'])
-events = clean_data(xml_bot['events'])
-xml_tasks = clean_data(xml_bot['tasks'])
-variables = clean_data(xml_bot['variables'])
+config = clean_data(xml_bot.get('config', {}))
+commands_list = clean_data(xml_bot.get('commands', {}))
+events = clean_data(xml_bot.get('events', {}))
+xml_tasks = clean_data(xml_bot.get('tasks', {}))
+variables = clean_data(xml_bot.get('variables', {}))
+views = clean_data(xml_bot.get('views', {}))
+
+if DEBUG_MODE:
+    print(20*'-')
+    print(clean_data(xml_bot['views']))
+    print(20*'-')
 
 tags = {k: (v.lower() == 'true') if isinstance(v, str) and v.lower() in {'true', 'false'} else v for item in config.pop('tag', []) if isinstance(item, dict) for k, v in item.get('@attributes', {}).items()}
 config['tags'] = tags
@@ -41,13 +55,7 @@ def get_token() -> str:
             try:
                 from dotenv import load_dotenv
             except ImportError:
-                size = get_package_size('python-dotenv')
-                print('='*20)
-                choice = input(f'It looks like you don\'t have the `python-dotenv` library installed.\nWould you like to install it?\nSize: {size / (1024 * 1024):.2f} MB (Y/N): ')
-                if choice.lower() == 'y':
-                    install_package('python-dotenv')
-                    print('Run script again.')
-                    exit()
+                raise MissingModule('python-dotenv')
             else:
                 load_dotenv()
                 return os.getenv('TOKEN')
@@ -56,13 +64,7 @@ def get_token() -> str:
             try:
                 import yaml
             except ImportError:
-                size = get_package_size('pyyaml')
-                print('='*20)
-                choice = input(f'It looks like you don\'t have the `pyyaml` library installed.\nWould you like to install it?\nSize: {size / (1024 * 1024):.2f} MB (Y/N): ')
-                if choice.lower() == 'y':
-                    install_package('pyyaml')
-                    print('Run script again.')
-                    exit()
+                raise MissingModule('pyyaml')
             else:
                 with open(token_tag, 'r') as file:
                     data = yaml.safe_load(file)
@@ -75,7 +77,6 @@ def get_token() -> str:
                 return data['token']
 
     raise ValueError("No valid token found")
-
 
 class Bot(commands.Bot):
     def __init__(self):
@@ -185,10 +186,13 @@ def create_command_function(data: dict) -> Callable:
                 await ctx.send(embed=embed)
 
             elif action_name == 'message':
-                await ctx.send(**action_data)
+                del action_data['@attributes']
+                await ctx.send(**action_data, view=views_list[data.get('@attributes', {}).get('view')]())
 
             elif action_name == 'reply_message':
-                await ctx.reply(**action_data)
+                view=views_list[action_data.get('@attributes', {}).get('view')]
+                del action_data['@attributes']
+                await ctx.reply(**action_data, view=view())
 
     return func
 
@@ -284,6 +288,153 @@ def create_dynamic_loop(*, name: str, loop_func: Callable[..., Any], hours: floa
 
 enabled_loops = []
 
+def create_dynamic_button_function(data: dict):
+    async def func(interaction: discord.Interaction):
+        vars = ({f'var({k})': v for k, v in variables.items()})
+        for action_name, action_data in data.items():
+            action_data = format_data(action_data, vars)
+
+            if action_name == 'log':
+                print(action_data)
+            elif action_name == 'run_script':
+                exec(action_data)  
+            elif action_name == 'channel_message':
+                channel_id = int(action_data.get('@attributes', {}).get('id', '0').format(**vars))
+                channel = await bot.fetch_channel(channel_id)
+                if channel:
+                    del action_data['@attributes']
+                    await channel.send(**action_data)
+            elif action_name == 'response':
+                action_type = action_data['@attributes']['type']
+                if action_type == 'message':
+                    del action_data['@attributes']
+                    await interaction.response.send_message(**action_data)
+                elif action_type == 'defer':
+                    await interaction.response.defer(
+                        ephemeral=action_data.get('@attributes', {}).get('ephemeral'),
+                        thinking=action_data.get('@attributes', {}).get('thinking')
+                    )
+                elif action_type == 'modal':
+                    await interaction.response.send_modal(action_data['@attributes']['name'])
+    
+    return func
+
+def create_dynamic_option_function(data: dict):
+    async def func(interaction: discord.Interaction):
+        vars = ({f'var({k})': v for k, v in variables.items()})
+        for action_name, action_data in data.items():
+            action_data = format_data(action_data, vars)
+
+            if action_name == 'log':
+                print(action_data)
+            elif action_name == 'run_script':
+                exec(action_data)  
+            elif action_name == 'channel_message':
+                channel_id = int(action_data.get('@attributes', {}).get('id', '0').format(**vars))
+                channel = await bot.fetch_channel(channel_id)
+                if channel:
+                    del action_data['@attributes']
+                    await channel.send(**action_data)
+            elif action_name == 'response':
+                action_type = action_data['@attributes']['type']
+                if action_type == 'message':
+                    del action_data['@attributes']
+                    await interaction.response.send_message(**action_data)
+                elif action_type == 'defer':
+                    await interaction.response.defer(
+                        ephemeral=action_data.get('@attributes', {}).get('ephemeral'),
+                        thinking=action_data.get('@attributes', {}).get('thinking')
+                    )
+                elif action_type == 'modal':
+                    await interaction.response.send_modal(action_data['@attributes']['name'])
+    
+    return func
+
+def create_dynamic_buttons(data: dict) -> Callable:
+    buttons = data['button']
+    buttons_list = []
+    
+    colors_map = {
+        'primary': ButtonStyle.primary,
+        'blurple': ButtonStyle.primary,
+        'blue': ButtonStyle.primary,
+        'secondary': ButtonStyle.secondary,
+        'gray': ButtonStyle.secondary,
+        'grey': ButtonStyle.secondary,
+        'success': ButtonStyle.success,
+        'green': ButtonStyle.success,
+        'danger': ButtonStyle.danger,
+        'red': ButtonStyle.danger,
+        'link': ButtonStyle.link
+    }
+
+    for button in buttons:
+        class DynamicButton(Button):
+            def __init__(self, btn_data):
+                super().__init__(
+                    style=colors_map[btn_data['style']],
+                    label=btn_data['label'],
+                    disabled=btn_data.get('@attributes', {}).get('disabled', False),
+                    url=btn_data.get('url') if btn_data['style'] == ButtonStyle.link else None,
+                    emoji=btn_data.get('emoji')
+                )
+
+            async def callback(self, interaction: discord.Interaction, btn_data=button):
+                func = create_dynamic_button_function(btn_data['on_click'])
+                await func(interaction)
+
+        buttons_list.append(DynamicButton(button))
+
+    return buttons_list
+
+def create_dynamic_select_menus(data: dict) -> list:
+    options = data['select_menu']['option']
+    options_list = []
+
+    class DynamicSelect(Select):
+        def __init__(self, select_data):
+            super().__init__(
+                placeholder=select_data.get('@attributes', {}).get('placeholder', 'Choose an option...'),
+                min_values=int(select_data.get('@attributes', {}).get('min_values', 1)),
+                max_values=int(select_data.get('@attributes', {}).get('max_values', 1)),
+                options=[
+                    SelectOption(
+                        label=opt['label'],
+                        value=opt['@attributes']['value'],
+                        description=opt.get('description'),
+                        emoji=opt.get('emoji'),
+                        default='default' in opt.get('@attributes', {})
+                    )
+                    for opt in options
+                ]
+            )
+
+        async def callback(self, interaction: discord.Interaction):
+            for option in options:
+                if option['@attributes']['value'] in self.values:
+                    func = create_dynamic_option_function(option['on_select'])
+                    await func(interaction)
+
+    options_list.append(DynamicSelect(data['select_menu']))
+
+    return options_list
+
+def create_dynamic_view(data: dict) -> Callable:
+    buttons = create_dynamic_buttons(data)
+    select_menus = create_dynamic_select_menus(data)
+    
+    class DynamicView(View):
+        def __init__(self):
+            super().__init__(timeout=None)
+
+            for button in buttons:
+                self.add_item(button)
+            
+            for select_menu in select_menus:
+                self.add_item(select_menu)
+    
+    return DynamicView
+
 for task_name, task in xml_tasks.items():
     attr = task['@attributes']
     func = create_dynamic_loop_function(task)
@@ -297,22 +448,25 @@ for task_name, task in xml_tasks.items():
         enabled=attr.get('enabled', False)
     )
     
-    if attr.get('enabled', False):
+    if attr.get('enabled', False) == True:
         enabled_loops.append(dynamic_loop)
 
 for name, value in commands_list.items():
     print(f'Command found: {name}')
-    print(f'Command {name}: {value}')
     
     func = create_command_function(value)
     create_dynamic_command(name, func)
 
 for name, value in events.items():
     print(f'Event found: {name}')
-    print(f'Event {name}: {value}')
-    
     func = create_event_function(value, name)
     bot.add_listener(func, name)
+
+views_list = {}
+for name, value in views.items():
+    print(f'View found: {name}')
+    view = create_dynamic_view(value)
+    views_list[name] = view
 
 @bot.event
 async def on_ready():
