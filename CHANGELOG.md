@@ -3,7 +3,7 @@
 ### a1.0.3
 - Added support for buttons and select menus (views).
 - Added exceptions.py
-- Removed importer.py
+- Removed importer.py 
 
 ### a1.0.2
 - Added support for tasks.
