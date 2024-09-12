@@ -36,16 +36,10 @@ Welcome to the XMLCord documentation! Here you will find all the information you
 
 ## Getting Help
 
-- **[FAQ](faq.md)**: Frequently asked questions and their answers.
-- **[Community](community.md)**: Join the XMLCord community to ask questions, share tips, and connect with other users.
 - **[Reporting Issues](https://github.com/MateOp1337/XMLCord/issues)**: Report any bugs or issues you encounter. Your feedback is valuable for improving XMLCord!
-
-## Contributing
-
-- **[Contribute](contribute.md)**: Learn how you can contribute to the XMLCord project, whether it's through code, documentation, or feedback.
 
 ## License
 
-- **[License](LICENSE.md)**: Review the licensing terms for using and contributing to XMLCord.
+- **[License](../LICENSE.MD)**: Review the licensing terms for using and contributing to XMLCord.
 
 Thank you for using XMLCord! We hope this documentation helps you make the most of your project. If you have any questions or need further assistance, don’t hesitate to reach out through our community channels or issue tracker.
