@@ -7,7 +7,7 @@
 <events>
   <on_message>
     <argument name='message'/>
-    <message>.
+    <message>
         <content>You said: {argument(message).content}</content>
     </message>
   </on_message>
