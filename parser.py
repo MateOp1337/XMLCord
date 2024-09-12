@@ -1,14 +1,25 @@
+# parser.py
+
 import xml.etree.ElementTree as ET
+
+def convert_bool(value):
+    if value.lower() == 'true':
+        return True
+    elif value.lower() == 'false':
+        return False
+    return value
 
 def xml_to_dict(element) -> dict:
     result = {element.tag: {}}
 
     if element.attrib:
-        result[element.tag]['@attributes'] = element.attrib
+        result[element.tag]['@attributes'] = {
+            key: convert_bool(value) for key, value in element.attrib.items()
+        }
 
     if element.text and element.text.strip():
         text = element.text.strip()
-        result[element.tag]['#text'] = text
+        result[element.tag]['#text'] = convert_bool(text)
 
     children = list(element)
     if children:
