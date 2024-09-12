@@ -1,7 +1,8 @@
 # XMLCord Docs | Events
 
-1. Creating events
-**To create an event, you need to add it to the events in the bot's XML code. Example:**
+### 1. Creating Events
+
+To create an event, add it to the `<events>` section in the bot's XML configuration. Example:
 
 ```xml
 <events>
@@ -16,7 +17,7 @@
 
 ### 2. Available Events
 
-**List of events you can use in XMLCord:**
+Here are the events you can use in XMLCord:
 
 - **on_ready**: Triggered when the bot is ready and connected to Discord.
 - **on_message**: Triggered when a message is sent in a channel the bot has access to.
@@ -28,21 +29,21 @@
 - **on_reaction_remove**: Triggered when a reaction is removed from a message.
 - **on_guild_join**: Triggered when the bot joins a new server.
 - **on_guild_remove**: Triggered when the bot leaves a server.
-- Other events available in discord.py
+- Other events available in discord.py.
 
 **Note:** XMLCord may have issues handling certain events. [Learn more](#9-reporting-issues).
 
 ### 3. Event Arguments
 
-**Details on how to specify and use arguments in events:**
+Specify and use arguments in events as follows:
 
-- **name**: The name of the argument. Example: `name='message'`
-- **type**: The type of the argument (e.g., `text`, `number`). Example: `type='text'`
+- **name**: The name of the argument (e.g., `name='message'`).
+- **type**: The type of the argument (e.g., `text`, `number`).
 
 **Argument Requirements:**
 
 1. **Exact Names**: Argument names must match exactly with those in the [Discord.py documentation](https://discordpy.readthedocs.io/en/stable/).
-2. **Correct Types**: Use the correct data types (e.g., `text`, `number`).
+2. **Correct Types**: Use the appropriate data types (e.g., `text`, `number`).
 3. **Valid Values**: Ensure values are valid and within expected ranges.
 4. **Documentation Consistency**: Cross-check with the latest Discord.py documentation for accuracy.
 
@@ -50,14 +51,14 @@
 
 ### 4. Event Handlers
 
-**How to handle different types of events:**
+Handle different types of events using:
 
-- **Reply Messages**: Use `<message>` tag within an event to specify the reply.
-- **Logging**: Use `<log>` tag to log information when an event occurs.
+- **Reply Messages**: Use the `<message>` tag within an event to specify the reply.
+- **Logging**: Use the `<log>` tag to log information when an event occurs.
 
 ### 5. Example Event Definitions
 
-**Provide practical examples for common event setups:**
+Here are practical examples for common event setups:
 
 - **Greeting New Members**
 
@@ -85,35 +86,35 @@
 
 ### 6. Customizing Event Behavior
 
-**How to customize behavior based on different events:**
+Customize event behavior with:
 
-- **Dynamic Responses**: Customize responses based on event data using placeholders.
-- **Conditional Logic**: Implement conditional logic within event handlers based on arguments or event type.
+- **Dynamic Responses**: Use placeholders to customize responses based on event data.
+- **Conditional Logic**: Implement conditional logic within event handlers based on arguments or event types.
 
 ### 7. Troubleshooting Events
 
-**Common issues and how to resolve them:**
+Common issues and resolutions:
 
 - **Event Not Triggering**: Ensure the event is correctly specified in the XML and that the bot has the necessary permissions.
 - **Invalid Argument Types**: Verify that argument types match the expected values in the XML.
 
 ### 8. Best Practices
 
-**Tips for effectively using events:**
+Tips for effectively using events:
 
-- **Organize Events**: Keep event definitions organized for easier management and debugging.
-- **Optimize Performance**: Avoid using overly complex logic in event handlers to keep performance optimal.
-- **Test Thoroughly**: Test events thoroughly in a development environment before deploying.
+- **Organize Events**: Keep event definitions well-organized for easier management and debugging.
+- **Optimize Performance**: Avoid overly complex logic in event handlers to maintain optimal performance.
+- **Test Thoroughly**: Test events in a development environment before deploying them.
 
 ### 9. Reporting Issues
 
-**XMLCord may have issues handling certain events. If you encounter any errors or unexpected behavior related to events, please report them in the [Issues](https://github.com/MateOp1337/XMLCord/issues) tab on GitHub.**
+If you encounter errors or unexpected behavior related to events, please report them in the [Issues](https://github.com/MateOp1337/XMLCord/issues) tab on GitHub.
 
 **Include details such as:**
 
-- **Error Messages**: Any specific error messages you received.
-- **Event Configuration**: The XML configuration of the event that caused the issue.
+- **Error Messages**: Any specific error messages received.
+- **Event Configuration**: The XML configuration of the event causing the issue.
 - **Steps to Reproduce**: How to reproduce the issue.
-- **Additional Context**: Any additional information that might help in diagnosing the problem.
+- **Additional Context**: Any additional information that may help diagnose the problem.
 
 **Your feedback helps us improve XMLCord!**
