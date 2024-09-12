@@ -1,4 +1,4 @@
-## XMLCord Bot
+# XMLCord Bot
 
 > ### Warning!
 > XMLCord is currently in early Alpha stages and under active development. As such, it may contain bugs or exhibit instability.
