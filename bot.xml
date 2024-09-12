@@ -10,8 +10,8 @@
         <tag token=".env"/>
     </config>
     <variables>
-        <my_variable>123</my_variable>
-        <error_channel>1118200341641564332</error_channel>
+        <my_variable>value</my_variable>
+        <error_channel>12345</error_channel>
     </variables>
     <commands>
         <help>
