@@ -7,6 +7,8 @@
 
 **XMLCord** is a Discord bot framework that utilizes XML configuration for defining bot behaviors, commands, and events. This framework allows for dynamic command creation and event handling based on XML-defined specifications, providing an easy way to manage bot functionalities without hardcoding them directly into the code.
 
+**Looking for documentation? Take a look here: [XMLCord documentation](/DOCS/HOME/MD).**
+
 ### Key Features
 
 - **Dynamic Commands**: Define commands in XML, including their arguments and behaviors, and have them automatically registered with the bot.
