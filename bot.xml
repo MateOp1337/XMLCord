@@ -1,8 +1,9 @@
+<!-- bot.xml -->
+
 <bot>
     <config>
         <name>Your bot name</name>
         <prefix>-</prefix>
-        <token></token>
         <tag case_insensitive="true"/>
         <tag strip_after_prefix="true"/>
         <tag ignore_self="true"/>
@@ -10,7 +11,7 @@
     </config>
     <variables>
         <my_variable>123</my_variable>
-        <error_channel>1234</error_channel>
+        <error_channel>1118200341641564332</error_channel>
     </variables>
     <commands>
         <help>
@@ -29,18 +30,28 @@
             </reply_message>
         </test>
         <echo>
+            <permissions manage_roles='true'>
+                <administrator value='true'/>
+            </permissions>
             <argument name='message' type='text' rest='true'/>
             <reply_message>
                 <content>{argument(message)}</content>
             </reply_message>
         </echo>
+        <greet>
+            <reply_message view='my_view'>
+                <content>
+                    Hi, {ctx.author.mention}!
+                </content>
+            </reply_message>
+        </greet>
     </commands>
     <events>
         <on_ready>
             <log>Bot is ready!</log>
         </on_ready>
         <on_message>
-            <argument name='message' rest='true'/>
+            <argument name='message'/>
             <message>
                 <content>You said: {argument(message).content}</content>
             </message>
@@ -53,4 +64,58 @@
             </channel_message>
         </on_command_error>
     </events>
+    <tasks>
+        <my_task1 seconds="10" enabled="false">
+            <channel_message id='{var(error_channel)}'>
+                <content>Some text</content>
+            </channel_message>
+            <log>Sent message to error channel (my_task1)</log>
+        </my_task1>
+    </tasks>
+    <views>
+        <my_view>
+            <button>
+                <label>Press me!</label>
+                <style>blue</style>
+                <on_click>
+                    <response type='message'>
+                        <content>Hi!</content>
+                        <ephemeral>true</ephemeral>
+                    </response>
+                </on_click>
+            </button>
+            <button disabled='true'>
+                <label>Don't press me!</label>
+                <style>green</style>
+                <on_click>
+                    <response type='message'>
+                        <content>Hi!</content>
+                        <ephemeral>true</ephemeral>
+                    </response>
+                </on_click>
+            </button>
+            <select_menu>
+                <option value='option1'>
+                    <label>Option 1</label>
+                    <description>This is first option</description>
+                    <on_select>
+                        <response type='message'>
+                            <content>This is a first option. Hi!</content>
+                            <ephemeral>true</ephemeral>
+                        </response>
+                    </on_select>
+                </option>
+                <option value='option2'>
+                    <label>Option 2</label>
+                    <description>This is second option</description>
+                    <on_select>
+                        <response type='message'>
+                            <content>This is a second option. Hello!</content>
+                            <ephemeral>true</ephemeral>
+                        </response>
+                    </on_select>
+                </option>
+            </select_menu>
+        </my_view>
+    </views>
 </bot>
