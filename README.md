@@ -59,7 +59,7 @@
 
 This example shows how to set up basic configurations, including the bot’s prefix, token source, and additional settings like case sensitivity and token file path.
 
-### [Changelogs](CHANGELOG.MD)
+### [Changelogs](CHANGELOG.md)
 
 ### Upcoming features:
 - Modals
