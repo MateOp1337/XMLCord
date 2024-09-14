@@ -1,0 +1,10 @@
+# Ignore everything
+*
+
+# Except these files
+!.gitignore
+!base.py
+!exceptions.py
+!parser.py
+!bot.xml
+!requirements.txt
