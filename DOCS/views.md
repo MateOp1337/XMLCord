@@ -1,5 +1,7 @@
 ## XMLCord Documentation | Views (Buttons and select menus)
 
+*New in version a1.0.3*
+
 ### 1. View Components
 
 1. **Buttons**: Interactive elements that users can click. Buttons can have different styles and can trigger actions when clicked.
