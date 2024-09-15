@@ -1,4 +1,4 @@
-# XMLCord Docs | Events
+# XMLCord Documentation | Events
 
 ### 1. Creating Events
 
