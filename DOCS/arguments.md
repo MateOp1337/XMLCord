@@ -1,5 +1,7 @@
 ## XMLCord Documentation | Arguments
 
+*New in version a1.0.1*
+
 ### 1. Argument Requirements
 
 1. **Exact Names**: Argument names must exactly match those specified in the Discord.py documentation. Ensure that the names used are correct and consistent with the expected values.
