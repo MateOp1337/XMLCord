@@ -2,12 +2,12 @@
 
 import discord
 from discord.ext import commands, tasks
-from discord.ui import View, Button, Select
-from discord import SelectOption, ButtonStyle
+from discord.ui import View, Button, Select, Modal
+from discord import SelectOption, ButtonStyle, ui
 import os
 from typing import Callable, Dict, Any
 from parser import parse
-from XMLCord.exceptions import *
+from exceptions import MissingModule
 
 DEBUG_MODE = True
 
@@ -20,7 +20,7 @@ def clean_data(data: Dict[str, Any]) -> Dict[str, Any]:
         return [clean_data(item) for item in data]
     return data
 
-xml_data = parse('XMLCord/bot')
+xml_data = parse('bot')
 
 if DEBUG_MODE:
     print(f"Parsed XML Data: {xml_data}")
@@ -32,6 +32,7 @@ events = clean_data(xml_bot.get('events', {}))
 xml_tasks = clean_data(xml_bot.get('tasks', {}))
 variables = clean_data(xml_bot.get('variables', {}))
 views = clean_data(xml_bot.get('views', {}))
+modals = clean_data(xml_bot.get('modals', {}))
 
 if DEBUG_MODE:
     print(20*'-')
@@ -315,7 +316,7 @@ def create_dynamic_button_function(data: dict):
                         thinking=action_data.get('@attributes', {}).get('thinking')
                     )
                 elif action_type == 'modal':
-                    await interaction.response.send_modal(action_data['@attributes']['name'])
+                    await interaction.response.send_modal(modals_list[action_data['@attributes']['name']]())
     
     return func
 
@@ -346,7 +347,39 @@ def create_dynamic_option_function(data: dict):
                         thinking=action_data.get('@attributes', {}).get('thinking')
                     )
                 elif action_type == 'modal':
-                    await interaction.response.send_modal(action_data['@attributes']['name'])
+                    await interaction.response.send_modal(modals[action_data['@attributes']['name']])
+    
+    return func
+
+def create_dynamic_modal_function(data: dict, inputs: list) -> Callable:
+    async def func(interaction: discord.Interaction):
+        vars = ({f'var({k})': v for k, v in variables.items()})
+        vars.update({f'inp({k})': v for k, v in inputs.items()})
+        for action_name, action_data in data.items():
+            action_data = format_data(action_data, vars)
+
+            if action_name == 'log':
+                print(action_data)
+            elif action_name == 'run_script':
+                exec(action_data)  
+            elif action_name == 'channel_message':
+                channel_id = int(action_data.get('@attributes', {}).get('id', '0').format(**vars))
+                channel = await bot.fetch_channel(channel_id)
+                if channel:
+                    del action_data['@attributes']
+                    await channel.send(**action_data)
+            elif action_name == 'response':
+                action_type = action_data['@attributes']['type']
+                if action_type == 'message':
+                    del action_data['@attributes']
+                    await interaction.response.send_message(**action_data)
+                elif action_type == 'defer':
+                    await interaction.response.defer(
+                        ephemeral=action_data.get('@attributes', {}).get('ephemeral'),
+                        thinking=action_data.get('@attributes', {}).get('thinking')
+                    )
+                elif action_type == 'modal':
+                    await interaction.response.send_modal(modals[action_data['@attributes']['name']])
     
     return func
 
@@ -435,6 +468,30 @@ def create_dynamic_view(data: dict) -> Callable:
     
     return DynamicView
 
+def create_dynamic_modal(data: dict):
+    class DynamicModal(Modal):
+        def __init__(self):
+            super().__init__(timeout=None, title='Zgłoś użytkownika')
+            
+            styles = {
+                'paragraph': discord.TextStyle.paragraph,
+                'long': discord.TextStyle.long,
+                'short': discord.TextStyle.short
+            }
+            
+            for item in data['inputs'].values():
+                for item_data in item:
+                    text_input = ui.TextInput(label=item_data['@attributes']['label'], placeholder=item_data['@attributes'].get('placeholder'), style=styles[item_data['@attributes'].get('type', 'short')])
+                    self.add_item(text_input)
+
+        async def on_submit(self, interaction: discord.Interaction):
+            inputs = {child.label.lower().replace(' ', '_'): child.value for child in self.children if isinstance(child, ui.TextInput)}
+            
+            func = create_dynamic_modal_function(data['on_submit'], inputs)
+            await func(interaction)
+
+    return DynamicModal
+
 for task_name, task in xml_tasks.items():
     attr = task['@attributes']
     func = create_dynamic_loop_function(task)
@@ -459,14 +516,23 @@ for name, value in commands_list.items():
 
 for name, value in events.items():
     print(f'Event found: {name}')
+    
     func = create_event_function(value, name)
     bot.add_listener(func, name)
 
 views_list = {}
 for name, value in views.items():
     print(f'View found: {name}')
+    
     view = create_dynamic_view(value)
     views_list[name] = view
+
+modals_list = {}
+for name, value in modals.items():
+    print(f'Modal found: {name}')
+    
+    modal = create_dynamic_modal(value)
+    modals_list[name] = modal
 
 @bot.event
 async def on_ready():

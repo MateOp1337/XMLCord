@@ -10,8 +10,8 @@
         <tag token=".env"/>
     </config>
     <variables>
-        <my_variable>value</my_variable>
-        <error_channel>12345</error_channel>
+        <my_variable>123</my_variable>
+        <error_channel>1118200341641564332</error_channel>
     </variables>
     <commands>
         <help>
@@ -94,6 +94,13 @@
                     </response>
                 </on_click>
             </button>
+            <button>
+                <label>Modal</label>
+                <style>red</style>
+                <on_click>
+                    <response type='modal' name='my_modal'/>
+                </on_click>
+            </button>
             <select_menu>
                 <option value='option1'>
                     <label>Option 1</label>
@@ -118,4 +125,19 @@
             </select_menu>
         </my_view>
     </views>
+    <modals>
+        <my_modal title="Test" timeout="None">
+            <inputs>
+                <input label="Report reason" placeholder="reason" type="short"/>
+                <input label="Description" type="paragraph"/>
+                <input label="Additional informations" type="long"/>
+            </inputs>
+            <on_submit>
+                <response type='message'>
+                    <content>Test; Additional informations: {inp(additional_informations)}</content>
+                    <ephemeral>true</ephemeral>
+                </response>
+            </on_submit>
+        </my_modal>
+    </modals>
 </bot>
