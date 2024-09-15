@@ -1,4 +1,4 @@
-# XMLCord Docs | Permissions
+# XMLCord Documentation | Permissions
 
 *New in version a1.0.2*
 
