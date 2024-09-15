@@ -1,5 +1,8 @@
 ## Changelogs
 
+### a1.0.4
+- Added modals
+
 ### a1.0.3
 - Added support for buttons and select menus (views).
 - Added exceptions.py
