@@ -1,4 +1,4 @@
-# XMLCord Docs | Get Started
+# XMLCord Documentation | Get Started
 
 ## Requirements
 Before running the project, make sure you have the following installed:
