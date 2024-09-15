@@ -9,7 +9,7 @@ from typing import Callable, Dict, Any
 from parser import parse
 from exceptions import MissingModule
 
-DEBUG_MODE = True
+DEBUG_MODE = False
 
 def clean_data(data: Dict[str, Any]) -> Dict[str, Any]:
     if isinstance(data, dict):
