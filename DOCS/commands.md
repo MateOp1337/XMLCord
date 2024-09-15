@@ -1,4 +1,4 @@
-# XMLCord Docs | Commands
+# XMLCord Documentation | Commands
 
 ### 1. Creating Commands
 
