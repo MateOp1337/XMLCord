@@ -1,4 +1,4 @@
-## XMLCord Documentation | Views (Buttons and select menus)
+# XMLCord Documentation | Views (Buttons and select menus)
 
 *New in version a1.0.3*
 
