@@ -3,7 +3,7 @@
 *New in version a1.0.3*
 
 **See also:**
-- [Modals](modals.md)
+- [Modals](modals.md) *[New in version a1.0.4]*
 
 ### 1. View Components
 
