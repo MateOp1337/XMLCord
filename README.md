@@ -62,7 +62,6 @@ This example shows how to set up basic configurations, including the bot’s pre
 ### [Changelogs](CHANGELOG.md)
 
 ### Upcoming features:
-- Modals
 - Slash commands
 - More actions:
     - Manage channels
