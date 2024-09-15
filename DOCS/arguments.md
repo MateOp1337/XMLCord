@@ -1,4 +1,4 @@
-## XMLCord Documentation | Arguments
+# XMLCord Documentation | Arguments
 
 *New in version a1.0.1*
 
