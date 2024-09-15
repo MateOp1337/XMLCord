@@ -1,4 +1,4 @@
-# XMLBot Config Documentation
+# XMLCord Documentation | Configuration
 
 ## 1. Overview
 
