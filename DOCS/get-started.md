@@ -9,13 +9,16 @@ Before running the project, make sure you have the following installed:
 
 ## Setup
 
-1. **Clone the repository**:
+1. **Install Python**:
+   Download and install Python from https://www.python.org/downloads/.
+   
+2. **Clone the repository**:
    ```bash
    git clone https://github.com/MateOp1337/XMLCord.git
    cd XMLCord
    ```
 
-2. **Install dependencies**:
+3. **Install dependencies**:
    It's recommended to use a virtual environment to manage dependencies.
 
    MacOS/Linux:
