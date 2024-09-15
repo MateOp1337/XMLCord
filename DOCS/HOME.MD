@@ -1,4 +1,4 @@
-# XMLCord Documentation
+# XMLCord Documentation | Home
 
 Welcome to the XMLCord documentation! Here you will find all the information you need to get started with XMLCord, understand its features, and troubleshoot any issues you might encounter.
 
@@ -33,6 +33,18 @@ Welcome to the XMLCord documentation! Here you will find all the information you
    - **Buttons**: Define and configure interactive buttons in your XMLCord projects.
    - **Select Menus**: Learn how to set up dropdown select menus and handle user selections.
    - **Examples**: XML examples showcasing various button and select menu configurations.
+
+7. **[Modals](modals.md)**
+   - **Modal Structure**: Learn how to define and configure modals in XMLCord.
+   - **Modal Inputs**: Understand how to specify and use different types of modal inputs.
+   - **Modal Responses**: Configure how modals handle user submissions and responses.
+   - **Examples**: Sample XML configurations for various modal setups.
+
+8. **[Permissions](permissions.md)**
+   - **Permission Attributes**: Overview of the different attributes you can use for permissions.
+   - **Defining Permissions**: Learn how to set and combine permissions for commands.
+   - **Handling Permissions**: Tips for managing and verifying permissions.
+   - **Examples**: XML examples showing different permission configurations.
 
 ## Getting Help
 
