@@ -2,6 +2,9 @@
 
 *New in version a1.0.3*
 
+**See also:**
+- [Modals](modals.md)
+
 ### 1. View Components
 
 1. **Buttons**: Interactive elements that users can click. Buttons can have different styles and can trigger actions when clicked.
