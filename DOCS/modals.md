@@ -1,4 +1,4 @@
-# XMLCord Docs | Modals
+# XMLCord Documentation | Modals
 
 *New in version a1.0.4*
 
