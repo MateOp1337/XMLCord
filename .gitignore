@@ -1,10 +1,10 @@
 # Ignore everything
 *
 
-# Except these files
-!.gitignore
-!base.py
-!exceptions.py
-!parser.py
-!bot.xml
-!requirements.txt
+# Except these files in the root directory
+!/.gitignore
+!/base.py
+!/exceptions.py
+!/parser.py
+!/bot.xml
+!/requirements.txt
