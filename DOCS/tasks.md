@@ -1,5 +1,7 @@
 # XMLCord Documentation | Tasks
 
+*New in version a1.0.2*
+
 ### Overview
 
 Tasks in XMLCord are scheduled operations that execute at specified intervals. Each task can perform various actions such as sending messages, logging information, and more. Tasks are defined in the `<tasks>` section of the XML configuration.
