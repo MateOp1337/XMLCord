@@ -46,12 +46,35 @@ Welcome to the XMLCord documentation! Here you will find all the information you
    - **Handling Permissions**: Tips for managing and verifying permissions.
    - **Examples**: XML examples showing different permission configurations.
 
+9. **[Tags](tags.md)**
+   - **Available Tags**: Detailed information on the tags you can use in XMLCord.
+   - **Adding Tags**: How to define and use tags in your configuration.
+   - **Examples**: Sample XML configurations showing various tag setups.
+
+10. **[Tasks](tasks.md)**
+    - **Task Definition**: How to define and schedule tasks in XMLCord.
+    - **Task Configuration**: Learn how to set up task intervals and conditions.
+    - **Examples**: Sample XML configurations for task definitions.
+
+11. **[Variables](variables.md)**
+    - **Variable Definition**: Understand how to define and use variables in XMLCord.
+    - **Variable Usage**: Learn how to reference and manipulate variables in XML configurations.
+    - **Examples**: XML examples showcasing variable definitions and usage.
+
 ## Getting Help
 
 - **[Reporting Issues](https://github.com/MateOp1337/XMLCord/issues)**: Report any bugs or issues you encounter. Your feedback is valuable for improving XMLCord!
 
 ## License
 
-- **[License](../LICENSE.MD)**: Review the licensing terms for using and contributing to XMLCord.
+- **[License](../LICENSE.md)**: Review the licensing terms for using and contributing to XMLCord.
+
+## Contributing
+
+- **[Contributing Guide](../CONTRIBUTING.md)**: Find out how you can contribute to XMLCord, including guidelines for code contributions, issue reporting, and more.
+
+## Changelog
+
+- **[Changelog](../CHANGELOG.md)**: View the history of changes, updates, and improvements made to XMLCord.
 
 Thank you for using XMLCord! We hope this documentation helps you make the most of your project. If you have any questions or need further assistance, don’t hesitate to reach out through our community channels or issue tracker.
