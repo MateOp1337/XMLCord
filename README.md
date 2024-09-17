@@ -9,6 +9,8 @@
 
 **Looking for documentation? Take a look here: [XMLCord documentation](/DOCS/HOME.MD).**
 
+**[Get started](/DOCS/get-started.md)**!
+
 ### Key Features
 
 - **Dynamic Commands**: Define commands in XML, including their arguments and behaviors, and have them automatically registered with the bot.
