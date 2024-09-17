@@ -23,6 +23,14 @@ To add a task, define it within the `<tasks>` section. Here is an example of a t
 
 ### 2. Task Attributes
 
+- **hours**: Specifies the interval in hours at which the task will be executed. 
+  - **Value type**: Integer
+  - **Example**: `hours="10"`
+
+- **minutes**: Specifies the interval in minutes at which the task will be executed. 
+  - **Value type**: Integer
+  - **Example**: `minutes="10"`
+
 - **seconds**: Specifies the interval in seconds at which the task will be executed. 
   - **Value type**: Integer
   - **Example**: `seconds="10"`
