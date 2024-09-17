@@ -9,7 +9,7 @@
 
 **Looking for documentation? Take a look here: [XMLCord documentation](/DOCS/HOME.MD).**
 
-**[Get started](/DOCS/get-started.md)**!
+**[Get Started](/DOCS/get-started.md)**!
 
 ### Key Features
 
