@@ -29,6 +29,7 @@ Here are the events you can use in XMLCord:
 - **on_reaction_remove**: Triggered when a reaction is removed from a message.
 - **on_guild_join**: Triggered when the bot joins a new server.
 - **on_guild_remove**: Triggered when the bot leaves a server.
+- **on_slash_command_error**: Triggered when the slash command encounters an error. *New in version a1.0.5b*
 - Other events available in discord.py.
 
 **Note:** XMLCord may have issues handling certain events. [Learn more](#9-reporting-issues).
