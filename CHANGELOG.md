@@ -1,9 +1,9 @@
 ## Changelogs
 
 ### a1.0.5
-##### a1.0.5b (planned)
-- Planned: **Add event "tree error" (handling errors in slash commands)**
-- Planned: **Add command type control option**: Allow disabling "slash" and/or "prefix" commands for specific commands (e.g., `<help slash='false' prefix='true'>`). 
+##### a1.0.5b
+- Add event "tree error" (handling errors in slash commands)
+- **Add command type control option**: Allow disabling "slash" and/or "prefix" commands for specific commands (e.g., `<help slash='false' prefix='true'>`). 
 
 ##### a1.0.5a
 - Added support for slash commands
