@@ -84,9 +84,11 @@ Customize command behavior with:
 - **Dynamic Responses**: Use placeholders to customize responses based on command arguments.
 - **Conditional Logic**: Implement conditional logic within command handlers based on arguments or command types.
 
-### 7. Command Configurations [PLANNED IN *v-a1.0.5b*]
+### 7. Command Configurations
 
-Starting from version **a1.0.5b** (planned feature), commands can be configured to respond as either slash, prefix, or both. This functionality is not yet available in version **a1.0.5a**. Here are a couple of examples:
+*New in version a1.0.5b*
+
+Starting from version **a1.0.5b**, commands can be configured to respond as either slash, prefix, or both. This functionality is not yet available in version **a1.0.5a**. Here are a couple of examples:
 
 ```xml
 <help slash='true' prefix='false'>
