@@ -1,4 +1,4 @@
-# XMLCord Documentation | Commands
+## XMLCord Documentation | Commands
 
 ### 1. Creating Commands
 
@@ -19,9 +19,10 @@ To create a command, define it in the `<commands>` section of the bot's XML conf
 
 Here are the attributes you can use for commands in XMLCord:
 
-- **name**: The name of the command (e.g., `name='my_command'`).a
+- **name**: The name of the command (e.g., `name='my_command'`).
 - **description**: A description of the command's functionality (optional).
-- **usage**: How to use the command (optional).
+- **slash**: Set to `true` if the command should be available as a slash command (default is `true`). *New in version a1.0.5a*
+- **prefix**: Set to `true` if the command should be available as a prefixed command (default is `true`). *New in version a1.0.5a*
 
 ### 3. Command Arguments
 
@@ -42,6 +43,8 @@ Handle commands using the following:
 
 - **Reply Messages**: Use the `<message>` tag within a command to specify the reply.
 - **Logging**: Use the `<log>` tag to log information when a command is executed.
+
+> **Note:** When using slash commands, ensure to use `<reply_message>` or `<reply_embed>`, otherwise you may encounter "interaction failed" errors.
 
 ### 5. Example Command Definitions
 
@@ -81,14 +84,38 @@ Customize command behavior with:
 - **Dynamic Responses**: Use placeholders to customize responses based on command arguments.
 - **Conditional Logic**: Implement conditional logic within command handlers based on arguments or command types.
 
-### 7. Troubleshooting Commands
+### 7. Command Configurations [PLANNED IN *v-a1.0.5b*]
+
+Starting from version **a1.0.5b** (planned feature), commands can be configured to respond as either slash, prefix, or both. This functionality is not yet available in version **a1.0.5a**. Here are a couple of examples:
+
+```xml
+<help slash='true' prefix='false'>
+    <reply_embed>
+        <title>Help embed</title>
+        <description>Some text :P</description>
+        <color>#ff0000</color>
+    </reply_embed>
+</help>
+```
+
+```xml
+<help slash='false' prefix='true'>
+    <reply_embed>
+        <title>Help embed</title>
+        <description>Some text :P</description>
+        <color>#ff0000</color>
+    </reply_embed>
+</help>
+```
+
+### 8. Troubleshooting Commands
 
 Common issues and resolutions:
 
 - **Command Not Recognized**: Ensure the command is correctly specified in the XML and that the bot has the necessary permissions.
 - **Invalid Argument Types**: Verify that argument types match the expected values in the XML.
 
-### 8. Best Practices
+### 9. Best Practices
 
 Tips for effectively using commands:
 
@@ -96,7 +123,7 @@ Tips for effectively using commands:
 - **Optimize Performance**: Avoid overly complex logic in command handlers to maintain optimal performance.
 - **Test Thoroughly**: Test commands in a development environment before deploying them.
 
-### 9. Reporting Issues
+### 10. Reporting Issues
 
 If you encounter errors or unexpected behavior related to commands, please report them in the [Issues](https://github.com/MateOp1337/XMLCord/issues) tab on GitHub.
 
