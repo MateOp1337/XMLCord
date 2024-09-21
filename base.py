@@ -3,13 +3,34 @@
 import discord
 from discord.ext import commands, tasks
 from discord.ui import View, Button, Select, Modal
-from discord import SelectOption, ButtonStyle, ui
+from discord import SelectOption, ButtonStyle, ui, app_commands
 import os
 from typing import Callable, Dict, Any
 from parser import parse
-from exceptions import MissingModule
 
-DEBUG_MODE = False
+from xml.etree.ElementTree import ParseError as XMLParseError
+
+DEBUG_MODE = True
+
+def print_error(message, details=None):
+    separator = "=" * 50
+    error_header = "ERROR"
+    error_message = message
+    details_header = "Details"
+
+    print(separator)
+    print(f"{error_header:^50}")
+    print(f"{'-' * len(error_header)}")
+    print(f"{error_message}")
+    
+    if details:
+        print(f"{'-' * len(error_header)}")
+        print(f"{details_header:^50}")
+        print(f"{'-' * len(details_header)}")
+        print(f"{details}")
+    
+    print(separator)
+    exit()
 
 def clean_data(data: Dict[str, Any]) -> Dict[str, Any]:
     if isinstance(data, dict):
@@ -20,7 +41,14 @@ def clean_data(data: Dict[str, Any]) -> Dict[str, Any]:
         return [clean_data(item) for item in data]
     return data
 
-xml_data = parse('bot')
+try:
+    xml_data = parse('XMLCord/bot')
+except XMLParseError as e:
+    print_error('Failed to parse XML', e)
+except FileNotFoundError:
+    print_error('File not found', 'The file \'bot.xml\' was not found. Make sure its name is \'bot.xml\'.')
+except OSError:
+    print_error('OS Error', 'Could not read file \'bot.xml\'. Make sure the file is not corrupted and the script can read it.')
 
 if DEBUG_MODE:
     print(f"Parsed XML Data: {xml_data}")
@@ -44,6 +72,19 @@ config['tags'] = tags
 
 ignore_self = tags.get('ignore_self', False)
 
+class Bot(commands.Bot):
+    def __init__(self):
+        super().__init__(
+            command_prefix=config.get('prefix', '!'),
+            intents=discord.Intents.all(),
+            case_insensitive=tags.get('case_insensitive', False),
+            help_command=None,
+            strip_after_prefix=tags.get('strip_after_prefix', False)
+        )
+
+bot = Bot()
+tree = bot.tree
+
 def get_token() -> str:
     token_from_config = config.get('token')
     if token_from_config:
@@ -56,7 +97,7 @@ def get_token() -> str:
             try:
                 from dotenv import load_dotenv
             except ImportError:
-                raise MissingModule('python-dotenv')
+                print_error('Module not found', 'Module \'python-dotenv\' not found. Install it with \'pip install python-dotenv\'.')
             else:
                 load_dotenv()
                 return os.getenv('TOKEN')
@@ -65,7 +106,7 @@ def get_token() -> str:
             try:
                 import yaml
             except ImportError:
-                raise MissingModule('pyyaml')
+                print_error('Module not found', 'Module \'pyyaml\' not found. Install it with \'pip install pyyaml\'.')
             else:
                 with open(token_tag, 'r') as file:
                     data = yaml.safe_load(file)
@@ -77,23 +118,14 @@ def get_token() -> str:
                 data = json.load(file)
                 return data['token']
 
-    raise ValueError("No valid token found")
+    print_error('No valid token found', 'Bot token not found. Ensure it\'s in the <token>...</token> tag or in a .env, config.json, or config.yml file. If in a separate file, make sure the correct path is specified in the <token> tag.')
 
-class Bot(commands.Bot):
-    def __init__(self):
-        super().__init__(
-            command_prefix=config.get('prefix', '!'),
-            intents=discord.Intents.all(),
-            case_insensitive=tags.get('case_insensitive', False),
-            help_command=None,
-            strip_after_prefix=tags.get('strip_after_prefix', False)
-        )
-
-bot = Bot()
-
-def create_dynamic_command(name: str, function: Callable):
+def create_dynamic_command(name: str, function: Callable, slash_function: Callable):
     command = commands.Command(function, name=name)
     bot.add_command(command)
+    
+    slash_command = app_commands.Command(name=name, description='...', callback=slash_function)
+    tree.add_command(slash_command)
 
 def hex_to_int(hex_str: str) -> int:
     hex_str = hex_str.lstrip('#')
@@ -179,23 +211,148 @@ def create_command_function(data: dict) -> Callable:
 
         for action_name, action_data in data.items():
             action_data = format_data(action_data, vars)
+            view = views_list.get(action_data.get('@attributes', {}).get('view'))
 
-            if action_name == 'embed':
+            if action_name == 'log':
+                print(action_data)
+                
+            elif action_name == 'run_script':
+                exec(action_data)
+                
+            elif action_name == 'channel_message':
+                channel_id = int(action_data.get('@attributes', {}).get('id', '0').format(**vars))
+                channel = await bot.fetch_channel(channel_id)
+                if channel:
+                    action_data.pop('@attributes', None)
+                    await channel.send(**action_data)
+
+            elif action_name == 'embed':
                 if 'color' in action_data:
                     action_data['color'] = hex_to_int(action_data['color'])
                 embed = discord.Embed(**action_data)
-                await ctx.send(embed=embed)
+                await ctx.send(embed=embed, view=view())
 
             elif action_name == 'message':
-                del action_data['@attributes']
-                await ctx.send(**action_data, view=views_list[data.get('@attributes', {}).get('view')]())
+                action_data.pop('@attributes', None)
+                await ctx.send(**action_data, view=view())
+
+            elif action_name == 'reply_embed':
+                if 'color' in action_data:
+                    action_data['color'] = hex_to_int(action_data['color'])
+                embed = discord.Embed(**action_data)
+                await ctx.reply(embed=embed, view=view())
 
             elif action_name == 'reply_message':
-                view=views_list[action_data.get('@attributes', {}).get('view')]
-                del action_data['@attributes']
+                action_data.pop('@attributes', None)
                 await ctx.reply(**action_data, view=view())
 
     return func
+
+def create_slash_command_function(data: dict) -> Callable:
+    types = {
+        'str': str, 'string': str, 'text': str,
+        'int': int, 'integer': int, 'number': int, 'numb': int,
+        'list': list,
+        'dict': dict, 'dictionary': dict, 'json': dict
+    }
+
+    arg_list = data.get('argument', None)
+    arguments = {}
+
+    if isinstance(arg_list, dict):
+        arg_list = [arg_list]
+
+    if arg_list:
+        for arg in arg_list:
+            arg = arg.get('@attributes', {})
+            try:
+                arg_name = arg['name']
+            except KeyError:
+                print_error('Argument name not provided')
+
+            try:
+                arg_type = types[arg['type']]
+            except KeyError:
+                print_error('Argument not provided or invalid annotation.')
+            arguments[arg_name] = arg_type
+
+    args = ', '.join(f"{key}: {value.__name__}" for key, value in arguments.items())
+    
+    body = f"""
+async def dynamic_func(interaction: discord.Interaction, {args}):
+    data = {data}
+    
+    arguments = locals()
+    arguments.pop('data')
+
+    if 'permissions' in data:
+        permissions_data = data['permissions']
+        permissions = []
+
+        if isinstance(permissions_data, dict):
+            for perm_name, perm_value in permissions_data.items():
+                if perm_name == '@attributes':
+                    for perm, value in perm_value.items():
+                        if value == True:
+                            permissions.append(perm)
+                else:
+                    permissions.append(perm_name)
+
+        def check_permissions(perms, user):
+            missing_permissions = [perm for perm in perms if not getattr(user.guild_permissions, perm, False)]
+            if missing_permissions:
+                raise commands.MissingPermissions(missing_permissions)
+
+        check_permissions(permissions, interaction.user)
+
+    vars = {{f'argument({{arg}})': val for arg, val in arguments.items()}}
+    vars.update({{f'var({{k}})': v for k, v in variables.items()}})
+    vars.update({{'ctx': await commands.Context.from_interaction(interaction)}})
+
+    if 'argument' in data:
+        data.pop('argument')
+
+    for action_name, action_data in data.items():
+        action_data = format_data(action_data, vars)
+        view = views_list.get(action_data.get('@attributes', {{}}).get('view'))
+        view = view() if view else None
+
+        if action_name == 'log':
+            print(action_data)
+
+        elif action_name == 'run_script':
+            exec(action_data)
+
+        elif action_name == 'channel_message':
+            channel_id = int(action_data.get('@attributes', {{}}).get('id', '0').format(**vars))
+            channel = await bot.fetch_channel(channel_id)
+            if channel:
+                action_data.pop('@attributes', None)
+                await channel.send(**action_data)
+
+        elif action_name == 'embed':
+            if 'color' in action_data:
+                action_data['color'] = hex_to_int(action_data['color'])
+            embed = discord.Embed(**action_data)
+            await interaction.channel.send(embed=embed, view=view)
+
+        elif action_name == 'message':
+            action_data.pop('@attributes', None)
+            await interaction.channel.send(**action_data, view=view)
+
+        elif action_name == 'reply_embed':
+            if 'color' in action_data:
+                action_data['color'] = hex_to_int(action_data['color'])
+            embed = discord.Embed(**action_data)
+            await interaction.response.send_message(embed=embed, view=view)
+
+        elif action_name == 'reply_message':
+            action_data.pop('@attributes', None)
+            await interaction.response.send_message(**action_data, view=view)
+"""
+
+    exec(body, globals())
+    return globals()['dynamic_func']
 
 def create_event_function(data: dict, event: str) -> Callable:
     async def func(*args, **kwargs):
@@ -236,7 +393,7 @@ def create_event_function(data: dict, event: str) -> Callable:
                 channel_id = int(action_data.get('@attributes', {}).get('id', '0').format(**vars))
                 channel = await bot.fetch_channel(channel_id)
                 if channel:
-                    del action_data['@attributes']
+                    action_data.pop('@attributes', None)
                     await channel.send(**action_data)
             elif event == 'on_message':
                 if action_name == 'embed':
@@ -271,7 +428,7 @@ def create_dynamic_loop_function(data: dict) -> Callable:
                 channel_id = int(action_data.get('@attributes', {}).get('id', '0').format(**vars))
                 channel = await bot.fetch_channel(channel_id)
                 if channel:
-                    del action_data['@attributes']
+                    action_data.pop('@attributes', None)
                     await channel.send(**action_data)
 
     return func
@@ -303,12 +460,12 @@ def create_dynamic_button_function(data: dict):
                 channel_id = int(action_data.get('@attributes', {}).get('id', '0').format(**vars))
                 channel = await bot.fetch_channel(channel_id)
                 if channel:
-                    del action_data['@attributes']
+                    action_data.pop('@attributes', None)
                     await channel.send(**action_data)
             elif action_name == 'response':
                 action_type = action_data['@attributes']['type']
                 if action_type == 'message':
-                    del action_data['@attributes']
+                    action_data.pop('@attributes', None)
                     await interaction.response.send_message(**action_data)
                 elif action_type == 'defer':
                     await interaction.response.defer(
@@ -334,12 +491,12 @@ def create_dynamic_option_function(data: dict):
                 channel_id = int(action_data.get('@attributes', {}).get('id', '0').format(**vars))
                 channel = await bot.fetch_channel(channel_id)
                 if channel:
-                    del action_data['@attributes']
+                    action_data.pop('@attributes', None)
                     await channel.send(**action_data)
             elif action_name == 'response':
                 action_type = action_data['@attributes']['type']
                 if action_type == 'message':
-                    del action_data['@attributes']
+                    action_data.pop('@attributes', None)
                     await interaction.response.send_message(**action_data)
                 elif action_type == 'defer':
                     await interaction.response.defer(
@@ -366,12 +523,12 @@ def create_dynamic_modal_function(data: dict, inputs: list) -> Callable:
                 channel_id = int(action_data.get('@attributes', {}).get('id', '0').format(**vars))
                 channel = await bot.fetch_channel(channel_id)
                 if channel:
-                    del action_data['@attributes']
+                    action_data.pop('@attributes', None)
                     await channel.send(**action_data)
             elif action_name == 'response':
                 action_type = action_data['@attributes']['type']
                 if action_type == 'message':
-                    del action_data['@attributes']
+                    action_data.pop('@attributes', None)
                     await interaction.response.send_message(**action_data)
                 elif action_type == 'defer':
                     await interaction.response.defer(
@@ -512,7 +669,8 @@ for name, value in commands_list.items():
     print(f'Command found: {name}')
     
     func = create_command_function(value)
-    create_dynamic_command(name, func)
+    slash_func = create_slash_command_function(value)
+    create_dynamic_command(name, func, slash_func)
 
 for name, value in events.items():
     print(f'Event found: {name}')
@@ -538,6 +696,10 @@ for name, value in modals.items():
 async def on_ready():
     for loop in enabled_loops:
         await loop.start()
+    
+    slash_commands = await bot.tree.sync()
+    if DEBUG_MODE:
+        print(f'Synced {len(slash_commands)} slash commands')
 
 TOKEN = get_token()
 bot.run(TOKEN)
