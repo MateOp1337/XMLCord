@@ -67,14 +67,14 @@ Welcome to the XMLCord documentation! Here you will find all the information you
 
 ## License
 
-- **[License](../LICENSE.md)**: Review the licensing terms for using and contributing to XMLCord.
+- **[License](/LICENSE.md)**: Review the licensing terms for using and contributing to XMLCord.
 
 ## Contributing
 
-- **[Contributing Guide](../CONTRIBUTING.md)**: Find out how you can contribute to XMLCord, including guidelines for code contributions, issue reporting, and more.
+- **[Contributing Guide](/CONTRIBUTING.md)**: Find out how you can contribute to XMLCord, including guidelines for code contributions, issue reporting, and more.
 
 ## Changelog
 
-- **[Changelog](../CHANGELOG.md)**: View the history of changes, updates, and improvements made to XMLCord.
+- **[Changelog](/CHANGELOG.md)**: View the history of changes, updates, and improvements made to XMLCord.
 
 Thank you for using XMLCord! We hope this documentation helps you make the most of your project. If you have any questions or need further assistance, don’t hesitate to reach out through our community channels or issue tracker.
