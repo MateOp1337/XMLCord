@@ -10,7 +10,7 @@ from parser import parse
 
 from xml.etree.ElementTree import ParseError as XMLParseError
 
-DEBUG_MODE = True
+DEBUG_MODE = False
 
 def print_error(message, details=None):
     separator = "=" * 50
@@ -42,7 +42,7 @@ def clean_data(data: Dict[str, Any]) -> Dict[str, Any]:
     return data
 
 try:
-    xml_data = parse('XMLCord/bot')
+    xml_data = parse('bot')
 except XMLParseError as e:
     print_error('Failed to parse XML', e)
 except FileNotFoundError:
@@ -120,12 +120,14 @@ def get_token() -> str:
 
     print_error('No valid token found', 'Bot token not found. Ensure it\'s in the <token>...</token> tag or in a .env, config.json, or config.yml file. If in a separate file, make sure the correct path is specified in the <token> tag.')
 
-def create_dynamic_command(name: str, function: Callable, slash_function: Callable):
-    command = commands.Command(function, name=name)
-    bot.add_command(command)
+def create_dynamic_command(name: str, function: Callable, slash_function: Callable, prefix: bool=True, slash: bool=True):
+    if prefix:
+        command = commands.Command(function, name=name)
+        bot.add_command(command)
     
-    slash_command = app_commands.Command(name=name, description='...', callback=slash_function)
-    tree.add_command(slash_command)
+    if slash:
+        slash_command = app_commands.Command(name=name, description='...', callback=slash_function)
+        tree.add_command(slash_command)
 
 def hex_to_int(hex_str: str) -> int:
     hex_str = hex_str.lstrip('#')
@@ -193,7 +195,7 @@ def create_command_function(data: dict) -> Callable:
                 for perm_name, perm_value in permissions_data.items():
                     if perm_name == '@attributes':
                         for perm, value in perm_value.items():
-                            if value.lower() == 'true':
+                            if value == True:
                                 permissions.append(perm)
                     else:
                         permissions.append(perm_name)
@@ -395,7 +397,8 @@ def create_event_function(data: dict, event: str) -> Callable:
                 if channel:
                     action_data.pop('@attributes', None)
                     await channel.send(**action_data)
-            elif event == 'on_message':
+
+            if event == 'on_message':
                 if action_name == 'embed':
                     if 'color' in action_data:
                         action_data['color'] = hex_to_int(action_data['color'])
@@ -410,6 +413,21 @@ def create_event_function(data: dict, event: str) -> Callable:
                     await args[0].channel.send(**action_data)
                 elif action_name == 'reply_message':
                     await args[0].reply(**action_data)
+            
+            elif event in ['on_slash_command_error']:
+                if action_name == 'response':
+                    action_type = action_data['@attributes']['type']
+                    if action_type == 'message':
+                        action_data.pop('@attributes', None)
+                        await args[0].response.send_message(**action_data)
+                    elif action_type == 'defer':
+                        await args[0].response.defer(
+                            ephemeral=action_data.get('@attributes', {}).get('ephemeral'),
+                            thinking=action_data.get('@attributes', {}).get('thinking')
+                        )
+                    elif action_type == 'modal':
+                        await args[0].response.send_modal(modals_list[action_data['@attributes']['name']]())
+                    
 
     return func
 
@@ -670,13 +688,22 @@ for name, value in commands_list.items():
     
     func = create_command_function(value)
     slash_func = create_slash_command_function(value)
-    create_dynamic_command(name, func, slash_func)
+    
+    attr = value.get('@attributes', {})
+    prefix, slash = attr.get('prefix', True), attr.get('slash', True)
+    create_dynamic_command(name, func, slash_func, prefix, slash)
 
 for name, value in events.items():
     print(f'Event found: {name}')
     
     func = create_event_function(value, name)
-    bot.add_listener(func, name)
+    
+    if name == 'on_slash_command_error':
+        @tree.error
+        async def on_app_command_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
+            await func(interaction, error)
+    else:
+        bot.add_listener(func, name)
 
 views_list = {}
 for name, value in views.items():
